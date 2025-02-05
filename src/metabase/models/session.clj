@@ -1,6 +1,7 @@
 (ns metabase.models.session
   (:require
    [buddy.core.codecs :as codecs]
+   [buddy.core.hash :as buddy-hash]
    [buddy.core.nonce :as nonce]
    [metabase.analytics.snowplow :as snowplow]
    [metabase.channel.email.messages :as messages]
@@ -16,6 +17,7 @@
    [metabase.util.log :as log]
    [metabase.util.malli :as mu]
    [metabase.util.malli.schema :as ms]
+   [metabase.util.string :as string]
    [methodical.core :as methodical]
    [toucan2.connection :as t2.conn]
    [toucan2.core :as t2]))
@@ -35,6 +37,8 @@
 
 (t2/define-before-insert :model/Session
   [session]
+  (when (or (uuid? (:id session)) (string/valid-uuid? (:id session)))
+    (throw (RuntimeException. "Session id not be stored plaintext in the session table.")))
   (cond-> session
     (some-> (request/current-request) request/embedded?) (assoc :anti_csrf_token (random-anti-csrf-token))))
 
@@ -42,6 +46,11 @@
   [{anti-csrf-token :anti_csrf_token, :as session}]
   (let [session-type (if anti-csrf-token :full-app-embed :normal)]
     (assoc session :type session-type)))
+
+(defn hash-session-id
+  "Hash the session-id for storage in the database"
+  [session-id]
+  (codecs/bytes->hex (buddy-hash/sha512 (str session-id))))
 
 (defn maybe-send-login-from-new-device-email
   "If set to send emails on first login from new devices, that is the case, and its not the users first login, send an
@@ -71,12 +80,12 @@
   [:and
    [:map-of :keyword :any]
    [:map
-    [:id uuid?]
+    [:id string?]
     [:type [:enum :normal :full-app-embed]]]])
 
 (defmulti create-session!
   "Generate a new Session for a User. `session-type` is currently either `:password` (for email + password login) or
-  `:sso` (for other login types). Returns the newly generated Session."
+  `:sso` (for other login types). Returns the newly generated Session with the id as the plain-text session-id."
   {:arglists '([session-type user device-info])}
   (fn [session-type & _]
     session-type))
@@ -84,20 +93,21 @@
 (mu/defmethod create-session! :sso :- SessionSchema
   [_ user :- CreateSessionUserInfo device-info :- request/DeviceInfo]
   (let [session-id (random-uuid)
+        session-id-hashed (hash-session-id session-id)
         session (first (t2/insert-returning-instances! :model/Session
-                                                       :id (str session-id)
+                                                       :id session-id-hashed
                                                        :user_id (u/the-id user)))]
     (assert (map? session))
     (let [event {:user-id (u/the-id user)}]
       (events/publish-event! :event/user-login event)
       (when (nil? (:last_login user))
         (events/publish-event! :event/user-joined event)))
-    (let [history-entry (login-history/record-login-history! session-id (u/the-id user) device-info)]
+    (let [history-entry (login-history/record-login-history! session-id-hashed (u/the-id user) device-info)]
       (when-not (:embedded device-info)
         (maybe-send-login-from-new-device-email history-entry))
       (when-not (:last_login user)
         (snowplow/track-event! ::snowplow/account {:event :new-user-created} (u/the-id user)))
-      (assoc session :id session-id))))
+      (assoc session :id (str session-id)))))
 
 (mu/defmethod create-session! :password :- SessionSchema
   [session-type
