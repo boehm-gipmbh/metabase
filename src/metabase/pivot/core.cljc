@@ -109,6 +109,11 @@
           (assoc-in [v :isCollapsed] false)))
     tree))
 
+(defn- select-indexes
+  "Given a row, "
+  [row indexes]
+  (map #(nth row %) indexes))
+
 (defn build-values-by-key
   "Replicate valuesByKey construction"
   [rows cols row-indexes col-indexes val-indexes col-settings]
@@ -119,8 +124,8 @@
         col-and-row-indexes (concat col-indexes row-indexes)]
     (reduce
      (fn [acc row]
-       (let [value-key  (to-key (map row col-and-row-indexes))
-             values     (map row val-indexes)
+       (let [value-key  (to-key (select-indexes row col-and-row-indexes))
+             values     (select-indexes row val-indexes)
              data       (map-indexed
                          (fn [index value]
                            {:value value
@@ -172,8 +177,8 @@
   (let [{:keys [row-tree col-tree]}
         (reduce
          (fn [{:keys [row-tree col-tree]} row]
-           (let [row-path (mapv row row-indexes)
-                 col-path (mapv row col-indexes)]
+           (let [row-path (select-indexes row row-indexes)
+                 col-path (select-indexes row col-indexes)]
              {:row-tree (add-path-to-tree row-path row-tree)
               :col-tree (add-path-to-tree col-path col-tree)}))
          {:row-tree (ordered-map/ordered-map)
