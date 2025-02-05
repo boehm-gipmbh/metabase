@@ -64,30 +64,24 @@
         subtotal)))
    pivot-data))
 
-#_(defn- collapse-level
-    "Marks all nodes at the given level as collapsed."
-    [tree level]
-    (into (ordered-map/ordered-map)
-          (if (zero? level)
-            (m/map-kv-vals))))
-
-(defn- add-seq-is-collapsed
-  "Takes a sequential collapsed-subtotal e.g. ['Widget', 'Odessa Emmerich Inch']
-  and updates the subtree associated "
-  []
-  (println "foobar"))
-
-(comment
-  (let [tmp (ordered-map/ordered-map)]))
+(defn- collapse-level
+  "Marks all nodes at the given level as collapsed. 1 = root node; 2 = children
+  of the root, etc."
+  [tree level]
+  (into (ordered-map/ordered-map)
+        (if (= level 1)
+          (m/map-vals
+           #(assoc % :isCollapsed true)
+           tree)
+          (m/map-vals
+           #(update % :children (fn [subtree] (collapse-level subtree (dec level))))
+           tree))))
 
 (defn- add-is-collapsed
   "Annotates a row tree with :isCollapsed values, based on the contents of
   collapsed-subtotals"
   [tree collapsed-subtotals]
   (let [parsed-collapsed-subtotals (map json-parse collapsed-subtotals)]
-    (def tsp-tree tree)
-    (def tsp-collapsed-subtotals collapsed-subtotals)
-    (def tsp-parsed-collapsed-subtotals parsed-collapsed-subtotals)
     ;; e.g. ["Widget","Odessa Emmerich Inc",4.5]
     (reduce
      (fn [tree collapsed-subtotal]
@@ -95,26 +89,15 @@
          ;; A plain integer represents an entire level of the tree which is
          ;; collapsed (1-indexed)
          (int? collapsed-subtotal)
-         :todo
+         (collapse-level tree collapsed-subtotal)
 
          ;; A seq represents a specific path in the tree which is collapsed
          (sequential? collapsed-subtotal)
-         (do (println "TSP this is sequential")
-             (let [key-path (conj (into [] (interpose :children collapsed-subtotal)) :isCollapsed)]
-               (def tsp-key-path key-path)
-               (println "TSP key-path" key-path)
-               (println tree)
-               (do (println "TSP Found" key-path)
-                   (def whatever (assoc-in tree key-path true))
-                   nil)))))
+         (let [key-path (conj (into [] (interpose :children collapsed-subtotal))
+                              :isCollapsed)]
+           (assoc-in tree key-path true))))
      tree
      parsed-collapsed-subtotals)))
-
-(defn- get-default-tree-map
-  "Returns a default tree map with isCollapsed: false"
-  []
-  (sorted-map :isCollapsed false))
-  
 
 (defn- add-path-to-tree
   "Adds a path of values to a row or column tree. Each level of the tree is an
@@ -124,17 +107,15 @@
   (if (seq path)
     (let [v       (first path)
           subtree (or (get-in tree [v :children]) (ordered-map/ordered-map))]
-      #_(assoc-in tree [v :children] (add-path-to-tree (rest path) subtree))
-      (assoc-in tree [v]
-                (merge (get-default-tree-map)
-                       {:children (add-path-to-tree (rest path) subtree)})))
+      (-> tree
+          (assoc-in [v :children] (add-path-to-tree (rest path) subtree))
+          (assoc-in [v :isCollapsed] false)))
     tree))
 
 (defn build-pivot-trees
   "TODO"
-  [rows col-indexes row-indexes col-settings collapsed-subtotals]
-  (def collapsed-subtotals collapsed-subtotals)
-  (let [{:keys [row-tree col-tree]}
+  [rows col-indexes row-indexes _col-settings collapsed-subtotals]
+  (let [{:keys [row-tree _col-tree]}
         (reduce
          (fn [{:keys [row-tree col-tree]} row]
            (let [row-path (mapv row row-indexes)
@@ -144,5 +125,4 @@
          {:row-tree (ordered-map/ordered-map)
           :col-tree (ordered-map/ordered-map)}
          rows)]
-    (add-is-collapsed row-tree collapsed-subtotals)
-    (def row-tree row-tree)))
+    (add-is-collapsed row-tree collapsed-subtotals)))
