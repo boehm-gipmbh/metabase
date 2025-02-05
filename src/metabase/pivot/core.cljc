@@ -134,7 +134,7 @@
               (assoc acc
                      (to-key value-key)
                      (sorted-map :values values
-                                 :valueCols value-cols
+                                 :valueColumns value-cols
                                  :data data
                                  :dimensions dimensions))))
           (ordered-map/ordered-map)
