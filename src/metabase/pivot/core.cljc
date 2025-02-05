@@ -132,7 +132,7 @@
                                     (filter (fn [tmp]
                                               (= (get-in tmp [:column :source]) "breakout"))))]
               (assoc acc
-                     value-key
+                     (to-key value-key)
                      (sorted-map :values values
                                  :valueCols value-cols
                                  :data data
