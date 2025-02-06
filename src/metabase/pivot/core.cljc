@@ -235,7 +235,7 @@
                                                                     rest-subs-by-col
                                                                     (or (> (count (:children child)) 1)
                                                                         (:isCollapsed child)))
-                                                      child))
+                                                      [child]))
                                         (:children row-item))})]
         (if (not-empty subtotal)
           [node (first subtotal)]
