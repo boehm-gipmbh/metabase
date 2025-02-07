@@ -7,10 +7,11 @@ import {
   isRootPersonalCollection,
 } from "metabase/collections/utils";
 import { useHasDashboardQuestionCandidates } from "metabase/components/MoveQuestionsIntoDashboardsModal/hooks";
+import { IndicatorMenu } from "metabase/core/components/IndicatorMenu";
 import { ForwardRefLink } from "metabase/core/components/Link";
 import * as Urls from "metabase/lib/urls";
 import { PLUGIN_COLLECTIONS } from "metabase/plugins";
-import { ActionIcon, Icon, Menu, Tooltip } from "metabase/ui";
+import { ActionIcon, Icon, Tooltip } from "metabase/ui";
 import type { Collection } from "metabase-types/api";
 
 export interface CollectionMenuProps {
@@ -25,7 +26,7 @@ const mergeArrays = (arr: React.ReactNode[][]): React.ReactNode[] => {
   return filteredArr.length === 0
     ? []
     : filteredArr.reduce((acc, val, index) =>
-        acc.concat(<Menu.Divider key={`divider-${index}`} />, ...val),
+        acc.concat(<IndicatorMenu.Divider key={`divider-${index}`} />, ...val),
       );
 };
 
@@ -54,12 +55,12 @@ export const CollectionMenu = ({
 
   if (canMove) {
     moveItems.push(
-      <Menu.Item
+      <IndicatorMenu.Item
         key="collection-move"
         icon={<Icon name="move" />}
         component={ForwardRefLink}
         to={`${url}/move`}
-      >{t`Move`}</Menu.Item>,
+      >{t`Move`}</IndicatorMenu.Item>,
     );
   }
 
@@ -74,12 +75,12 @@ export const CollectionMenu = ({
 
   if (isAdmin && !isPersonal && !isPersonalCollectionChild) {
     editItems.push(
-      <Menu.Item
+      <IndicatorMenu.Item
         key="collection-edit"
         icon={<Icon name="lock" />}
         component={ForwardRefLink}
         to={`${url}/permissions`}
-      >{t`Edit permissions`}</Menu.Item>,
+      >{t`Edit permissions`}</IndicatorMenu.Item>,
     );
   }
 
@@ -90,25 +91,25 @@ export const CollectionMenu = ({
 
   if (hasDqCandidates) {
     cleanupItems.push(
-      <Menu.FYCMenuItem
+      <IndicatorMenu.ItemWithBadge
         key="collection-move-to-dashboards"
         icon={<Icon name="add_to_dash" />}
         component={ForwardRefLink}
         to={`${url}/move-questions-dashboard`}
         userAckKey="move-to-dashboard"
         badgeLabel={t`New`}
-      >{t`Move questions into their dashboards`}</Menu.FYCMenuItem>,
+      >{t`Move questions into their dashboards`}</IndicatorMenu.ItemWithBadge>,
     );
   }
 
   if (canMove) {
     trashItems.push(
-      <Menu.Item
+      <IndicatorMenu.Item
         key="collection-trash"
         icon={<Icon name="trash" />}
         component={ForwardRefLink}
         to={`${url}/archive`}
-      >{t`Move to trash`}</Menu.Item>,
+      >{t`Move to trash`}</IndicatorMenu.Item>,
     );
   }
 
@@ -118,21 +119,17 @@ export const CollectionMenu = ({
     return null;
   }
 
-  // const showIndicator =
-  //   !hasSeenMenu &&
-  //   ((!hasSeenMoveToDashboard && hasDqCandidates) || showCleanupIndicator);
-
   return (
-    <Menu.FYC position="bottom-end">
-      <Menu.TargetWithFYC>
+    <IndicatorMenu position="bottom-end" menuKey="collection-menu">
+      <IndicatorMenu.Target>
         <Tooltip label={t`Move, trash, and more...`} position="bottom">
           <ActionIcon size={32} variant="viewHeader">
             <Icon name="ellipsis" color="text-dark" />
           </ActionIcon>
         </Tooltip>
-      </Menu.TargetWithFYC>
+      </IndicatorMenu.Target>
 
-      <Menu.Dropdown>{items}</Menu.Dropdown>
-    </Menu.FYC>
+      <IndicatorMenu.Dropdown>{items}</IndicatorMenu.Dropdown>
+    </IndicatorMenu>
   );
 };
