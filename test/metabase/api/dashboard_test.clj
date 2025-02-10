@@ -21,17 +21,17 @@
    [metabase.models.collection :as collection]
    [metabase.models.dashboard-card :as dashboard-card]
    [metabase.models.dashboard-test :as dashboard-test]
-   [metabase.models.data-permissions :as data-perms]
-   [metabase.models.data-permissions.graph :as data-perms.graph]
    [metabase.models.field-values :as field-values]
    [metabase.models.interface :as mi]
    [metabase.models.params :as params]
    [metabase.models.params.chain-filter :as chain-filter]
    [metabase.models.params.chain-filter-test :as chain-filter-test]
-   [metabase.models.permissions :as perms]
-   [metabase.models.permissions-group :as perms-group]
    [metabase.models.pulse :as models.pulse]
    [metabase.models.revision :as revision]
+   [metabase.permissions.models.data-permissions :as data-perms]
+   [metabase.permissions.models.data-permissions.graph :as data-perms.graph]
+   [metabase.permissions.models.permissions :as perms]
+   [metabase.permissions.models.permissions-group :as perms-group]
    [metabase.permissions.test-util :as perms.test-util]
    [metabase.query-processor :as qp]
    [metabase.query-processor.middleware.permissions :as qp.perms]
@@ -2981,6 +2981,39 @@
                      (->> (chain-filter-values-url (:id dashboard) (:category-name param-keys))
                           (mt/user-http-request :rasta :get 200)
                           (chain-filter-test/take-n-values 3)))))))))))
+
+(deftest chain-filter-can-fetch-remapped-values-from-model
+  (testing "Remapping works with aggregated queries on models #53059"
+    (mt/with-temp
+      [:model/Card {saved-query-id :id} {:database_id   (mt/id)
+                                         :table_id      (mt/id :orders)
+                                         :dataset_query (mt/mbql-query orders)}
+       :model/Card {card-id :id}        {:database_id   (mt/id)
+                                         :table_id      (str "card__" saved-query-id)
+                                         :dataset_query {:database (mt/id)
+                                                         :type     :query
+                                                         :query    {:source-table (str "card__" saved-query-id)
+                                                                    :aggregation  [[:count]]}}}
+       :model/Dashboard {dash-id :id}   {:parameters    [{:id   "__ID__"
+                                                          :name "ID"
+                                                          :type "id"
+                                                          :slug "id"}]}
+       :model/DashboardCard _           {:card_id            card-id
+                                         :dashboard_id       dash-id
+                                         :parameter_mappings [{:parameter_id "__ID__"
+                                                               :card_id      card-id
+                                                               :target       [:dimension
+                                                                              [:field
+                                                                               "PRODUCT_ID"
+                                                                               {:base-type :type/Integer}]]}]}]
+      (mt/with-column-remappings [orders.product_id products.title]
+        (is (=? {:values         [[(mt/malli=? pos-int?) "Aerodynamic Bronze Hat"]
+                                  [(mt/malli=? pos-int?) "Aerodynamic Concrete Bench"]
+                                  [(mt/malli=? pos-int?) "Aerodynamic Concrete Lamp"]]
+                 :has_more_values false}
+                (chain-filter-test/take-n-values
+                 3
+                 (mt/user-http-request :rasta :get 200 (chain-filter-values-url dash-id "__ID__")))))))))
 
 (deftest chain-filter-result-can-have-mixed-of-remapped-and-non-remapped-values-test
   (testing (str "getting values of a parameter that maps to 2 id fields: "
