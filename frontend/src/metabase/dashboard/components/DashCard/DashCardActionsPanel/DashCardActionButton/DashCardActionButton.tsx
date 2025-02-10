@@ -1,7 +1,7 @@
 import type { ElementType, HTMLAttributes } from "react";
 import { forwardRef } from "react";
 
-import Tooltip from "metabase/core/components/Tooltip";
+import { Tooltip } from "metabase/ui";
 
 import {
   ActionIcon,
@@ -18,7 +18,9 @@ const DashActionButton = forwardRef<HTMLAnchorElement, Props>(
   function DashActionButton({ as, tooltip, children, ...props }, ref) {
     return (
       <StyledAnchor {...props} as={as} ref={ref}>
-        <Tooltip tooltip={tooltip}>{children}</Tooltip>
+        <Tooltip label={tooltip} disabled={!tooltip}>
+          {children}
+        </Tooltip>
       </StyledAnchor>
     );
   },

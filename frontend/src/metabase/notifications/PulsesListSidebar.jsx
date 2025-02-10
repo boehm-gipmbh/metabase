@@ -7,7 +7,6 @@ import _ from "underscore";
 
 import Label from "metabase/components/type/Label";
 import Subhead from "metabase/components/type/Subhead";
-import Tooltip from "metabase/core/components/Tooltip";
 import CS from "metabase/css/core/index.css";
 import { Sidebar } from "metabase/dashboard/components/Sidebar";
 import { getParameters } from "metabase/dashboard/selectors";
@@ -18,7 +17,7 @@ import {
 import { getActivePulseParameters } from "metabase/lib/pulse";
 import { connect } from "metabase/lib/redux";
 import { formatFrame } from "metabase/lib/time";
-import { Icon } from "metabase/ui";
+import { Icon, Tooltip } from "metabase/ui";
 
 import { PulseCard, SidebarActions } from "./PulsesListSidebar.styled";
 
@@ -52,7 +51,7 @@ function _PulsesListSidebar({
         <Subhead>{t`Subscriptions`}</Subhead>
 
         <SidebarActions>
-          <Tooltip tooltip={t`Set up a new schedule`}>
+          <Tooltip label={t`Set up a new schedule`}>
             <Icon
               name="add"
               className={cx(
@@ -67,7 +66,7 @@ function _PulsesListSidebar({
               onClick={createSubscription}
             />
           </Tooltip>
-          <Tooltip tooltip={t`Close`}>
+          <Tooltip label={t`Close`}>
             <Icon
               name="close"
               className={cx(

@@ -9,7 +9,6 @@ import ActionButton from "metabase/components/ActionButton";
 import Card from "metabase/components/Card";
 import Button from "metabase/core/components/Button";
 import Link from "metabase/core/components/Link";
-import Tooltip from "metabase/core/components/Tooltip";
 import CS from "metabase/css/core/index.css";
 import { DashboardTabs } from "metabase/dashboard/components/DashboardTabs";
 import { DASHBOARD_PARAMETERS_PDF_EXPORT_NODE_ID } from "metabase/dashboard/constants";
@@ -25,7 +24,7 @@ import { connect } from "metabase/lib/redux";
 import * as Urls from "metabase/lib/urls";
 import { ParametersList } from "metabase/parameters/components/ParametersList";
 import { getMetadata } from "metabase/selectors/metadata";
-import { Icon } from "metabase/ui";
+import { Icon, Tooltip } from "metabase/ui";
 import { getValuePopulatedParameters } from "metabase-lib/v1/parameters/utils/parameter-values";
 
 import { FixedWidthContainer } from "../components/Dashboard/Dashboard.styled";
@@ -263,7 +262,7 @@ const SuggestionsList = ({ suggestions, section }) => (
                   />
                   <h4 className={CS.textWrap}>{item.title}</h4>
                   <ItemDescription className={CS.hoverChild}>
-                    <Tooltip tooltip={item.description}>
+                    <Tooltip label={item.description}>
                       <Icon name="info_outline" color={color("bg-dark")} />
                     </Tooltip>
                   </ItemDescription>
