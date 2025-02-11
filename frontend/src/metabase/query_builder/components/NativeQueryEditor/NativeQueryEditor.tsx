@@ -82,7 +82,7 @@ type OwnProps = typeof NativeQueryEditor.defaultProps & {
     overrideWithQuestion?: Question;
     shouldUpdateUrl?: boolean;
   }) => void;
-  setNativeEditorSelectedRange: (range: SelectionRange) => void;
+  setNativeEditorSelectedRange: (range: SelectionRange | null) => void;
   openDataReferenceAtQuestion: (id: CardId) => void;
   openSnippetModalWithSelectedText: () => void;
   insertSnippet: (snippet: NativeQuerySnippet) => void;

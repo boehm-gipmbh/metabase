@@ -22,7 +22,7 @@ export type CodeMirrorEditorProps = {
   readOnly?: boolean;
   onCursorMoveOverCardTag?: (id: CardId) => void;
   onRightClickSelection?: () => void;
-  onSelectionChange?: (range: SelectionRange) => void;
+  onSelectionChange?: (range: SelectionRange | null) => void;
 };
 
 export interface CodeMirrorEditorRef {
@@ -66,13 +66,17 @@ export const CodeMirrorEditor = forwardRef<
       // handle selection changes
       const value = update.state.doc.toString();
       if (onSelectionChange) {
-        onSelectionChange({
-          start: convertIndexToPosition(
-            value,
-            update.state.selection.main.from,
-          ),
-          end: convertIndexToPosition(value, update.state.selection.main.to),
-        });
+        if (update.state.selection.main.empty) {
+          onSelectionChange(null);
+        } else {
+          onSelectionChange({
+            start: convertIndexToPosition(
+              value,
+              update.state.selection.main.from,
+            ),
+            end: convertIndexToPosition(value, update.state.selection.main.to),
+          });
+        }
       }
       if (onCursorMoveOverCardTag) {
         const cardId = matchCardIdAtCursor(update.state);
