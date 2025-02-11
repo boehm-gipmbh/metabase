@@ -1,13 +1,12 @@
 (ns metabase.api.routes
   (:require
    [compojure.route :as route]
-   [metabase.api.action]
-   [metabase.api.activity]
+   [metabase.actions.api]
+   [metabase.activity-feed.api]
    ^{:clj-kondo/ignore [:deprecated-namespace]}
    [metabase.api.alert]
    [metabase.api.api-key]
    [metabase.api.automagic-dashboards]
-   [metabase.api.bookmark]
    [metabase.api.cache]
    [metabase.api.card]
    [metabase.api.cards]
@@ -45,9 +44,9 @@
    [metabase.api.testing]
    [metabase.api.tiles]
    [metabase.api.user]
-   [metabase.api.user-key-value]
    [metabase.api.util]
    [metabase.api.util.handlers :as handlers]
+   [metabase.bookmarks.api]
    [metabase.channel.api]
    [metabase.config :as config]
    [metabase.permissions.api]
@@ -55,14 +54,14 @@
    [metabase.setup.api]
    [metabase.sync.api]
    [metabase.timeline.api]
+   [metabase.user-key-value.api]
    [metabase.util.i18n :refer [deferred-tru]]))
 
-(comment metabase.api.action/keep-me
-         metabase.api.activity/keep-me
+(comment metabase.actions.api/keep-me
+         metabase.activity-feed.api/keep-me
          metabase.api.alert/keep-me
          metabase.api.api-key/keep-me
          metabase.api.automagic-dashboards/keep-me
-         metabase.api.bookmark/keep-me
          metabase.api.cache/keep-me
          metabase.api.card/keep-me
          metabase.api.cards/keep-me
@@ -92,10 +91,11 @@
          metabase.api.testing/keep-me
          metabase.api.tiles/keep-me
          metabase.api.user/keep-me
-         metabase.api.user-key-value/keep-me
          metabase.api.util/keep-me
+         metabase.bookmarks.api/keep-me
          metabase.permissions.api/keep-me
-         metabase.setup.api/keep-me)
+         metabase.setup.api/keep-me
+         metabase.user-key-value.api/keep-me)
 
 (def ^:private ^{:arglists '([request respond raise])} pass-thru-handler
   "Always 'falls thru' to the next handler."
@@ -134,12 +134,12 @@
 
 ;;; ↓↓↓ KEEP THIS SORTED OR ELSE! ↓↓↓
 (def ^:private route-map
-  {"/action"               (+auth 'metabase.api.action)
-   "/activity"             (+auth 'metabase.api.activity)
+  {"/action"               (+auth 'metabase.actions.api)
+   "/activity"             (+auth 'metabase.activity-feed.api)
    "/alert"                (+auth 'metabase.api.alert)
    "/api-key"              (+auth 'metabase.api.api-key)
    "/automagic-dashboards" (+auth 'metabase.api.automagic-dashboards)
-   "/bookmark"             (+auth 'metabase.api.bookmark)
+   "/bookmark"             (+auth 'metabase.bookmarks.api)
    "/cache"                (+auth 'metabase.api.cache)
    "/card"                 (+auth 'metabase.api.card)
    "/cards"                (+auth 'metabase.api.cards)
@@ -180,7 +180,7 @@
    "/timeline"             (+auth metabase.timeline.api/timeline-routes)
    "/timeline-event"       (+auth metabase.timeline.api/timeline-event-routes)
    "/user"                 (+auth 'metabase.api.user)
-   "/user-key-value"       (+auth 'metabase.api.user-key-value)
+   "/user-key-value"       (+auth 'metabase.user-key-value.api)
    "/util"                 'metabase.api.util})
 ;;; ↑↑↑ KEEP THIS SORTED OR ELSE ↑↑↑
 
