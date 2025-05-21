@@ -4,7 +4,8 @@ import styled from "@emotion/styled";
 import { APP_BAR_HEIGHT, APP_SUBHEADER_HEIGHT } from "metabase/nav/constants";
 
 export const AppBarRoot = styled.div`
-  background-color: var(--mb-color-bg-white);
+  //background-color: var(--mb-color-bg-white);
+  background-color: var(--mb-color-background-blue);
 `;
 
 interface AppBarHeaderProps {
