@@ -34,7 +34,6 @@ import {
 import { TaskModal } from "metabase/admin/tools/components/TaskModal";
 import { TasksApp } from "metabase/admin/tools/components/TasksApp";
 import { ToolsApp } from "metabase/admin/tools/components/ToolsApp";
-import { createAdminRouteGuard } from "metabase/admin/utils";
 import { ModalRoute } from "metabase/hoc/ModalRoute";
 import { Route } from "metabase/hoc/Title";
 import {
@@ -45,10 +44,12 @@ import {
   PLUGIN_METABOT,
 } from "metabase/plugins";
 
+import { ModelPersistenceConfiguration } from "./performance/components/ModelPersistenceConfiguration";
+import { StrategyEditorForDatabases } from "./performance/components/StrategyEditorForDatabases";
 import { PerformanceTabId } from "./performance/types";
-import RedirectToAllowedSettings from "./settings/containers/RedirectToAllowedSettings";
 import { getSettingsRoutes } from "./settingsRoutes";
 import { ToolsUpsell } from "./tools/components/ToolsUpsell";
+import { RedirectToAllowedSettings, createAdminRouteGuard } from "./utils";
 
 const getRoutes = (store, CanAccessSettings, IsAdmin) => (
   <Route path="/admin" component={CanAccessSettings}>
@@ -120,18 +121,23 @@ const getRoutes = (store, CanAccessSettings, IsAdmin) => (
         path="performance"
         component={createAdminRouteGuard("performance")}
       >
-        <Route title={t`Performance`}>
+        <Route title={t`Performance`} component={PerformanceApp}>
           <IndexRedirect to={PerformanceTabId.Databases} />
-          {PLUGIN_CACHING.getTabMetadata().map(({ name, key, tabId }) => (
-            <Route
-              component={(routeProps) => (
-                <PerformanceApp {...routeProps} tabId={tabId} />
-              )}
-              title={name}
-              path={tabId}
-              key={key}
-            />
-          ))}
+          <Route
+            path="databases"
+            title={t`Databases`}
+            component={StrategyEditorForDatabases}
+          />
+          <Route
+            path="models"
+            title={t`Models`}
+            component={ModelPersistenceConfiguration}
+          />
+          <Route
+            path="dashboards-and-questions"
+            title={t`Dashboards and questions`}
+            component={PLUGIN_CACHING.StrategyEditorForQuestionsAndDashboards}
+          />
         </Route>
       </Route>
       {PLUGIN_METABOT.AdminRoute}

@@ -1,8 +1,8 @@
 import {
+  assertNoUnstructuredSnowplowEvent,
   describeWithSnowplowEE,
   expectUnstructuredSnowplowEvent,
   main,
-  setTokenFeatures,
 } from "e2e/support/helpers";
 
 const { H } = cy;
@@ -13,6 +13,22 @@ describeWithSnowplowEE("scenarios > setup embedding (EMB-477)", () => {
     H.restore("blank");
   });
 
+  it("should redirect correctly from `/setup?use_case=embedding&new_embedding_flow=true&first_name=First&last_name=Last&email=testy@metabase.test&site_name=Epic%20Team`", () => {
+    cy.visit(
+      "/setup?use_case=embedding&new_embedding_flow=true&first_name=First&last_name=Last&email=testy@metabase.test&site_name=Epic%20Team",
+    );
+    cy.location("pathname").should("eq", "/setup/embedding");
+    cy.location("search").should(
+      "eq",
+      "?use_case=embedding&new_embedding_flow=true&first_name=First&last_name=Last&email=testy@metabase.test&site_name=Epic%20Team",
+    );
+
+    // `/setup` should not be rendered and its events should not be sent to not add noise to events
+    assertNoUnstructuredSnowplowEvent({
+      event: "step_seen", // `step_seen` event is sent on `/setup`, on `/setup/embedding` we send `embedding_setup_step_seen`
+    });
+  });
+
   it("should allow users to use existing setup flow", () => {
     cy.visit("/setup/embedding");
     assertEmbeddingOnboardingPageLoaded();
@@ -21,17 +37,15 @@ describeWithSnowplowEE("scenarios > setup embedding (EMB-477)", () => {
       .should("be.visible")
       .click();
 
-    cy.findAllByRole("main")
-      .eq(1)
-      .within(() => {
-        cy.findByRole("heading", { name: "Welcome to Metabase" }).should(
-          "be.visible",
-        );
-        cy.findByText(
-          "Looks like everything is working. Now let’s get to know you, connect to your data, and start finding you some answers!",
-        ).should("be.visible");
-        cy.button("Let's get started").should("be.visible");
-      });
+    cy.findByTestId("welcome-page").within(() => {
+      cy.findByRole("heading", { name: "Welcome to Metabase" }).should(
+        "be.visible",
+      );
+      cy.findByText(
+        "Looks like everything is working. Now let’s get to know you, connect to your data, and start finding you some answers!",
+      ).should("be.visible");
+      cy.button("Let's get started").should("be.visible");
+    });
 
     cy.location("pathname").should("eq", "/setup");
   });
@@ -92,7 +106,7 @@ describeWithSnowplowEE("scenarios > setup embedding (EMB-477)", () => {
     sidebar().within(() => {
       cy.findByRole("listitem", { current: "step" }).should(
         "have.text",
-        "Create User",
+        "Set up your account",
       );
     });
     step().within(() => {
@@ -123,7 +137,7 @@ describeWithSnowplowEE("scenarios > setup embedding (EMB-477)", () => {
       "Now we have a user we simulate being on cloud by setting a Metatabase Token",
     );
     cy.wait("@setup");
-    setTokenFeatures("all");
+    H.activateToken("pro-self-hosted");
 
     cy.log("2: Data connection step");
     sidebar().within(() => {
