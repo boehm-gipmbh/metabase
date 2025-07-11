@@ -251,7 +251,7 @@ export const tokenFeatures = [
   "ai_sql_generation",
   "ai_entity_analysis",
   "database_routing",
-  "development-mode",
+  "development_mode",
 ] as const;
 
 export type TokenFeature = (typeof tokenFeatures)[number];
@@ -311,7 +311,7 @@ export type CustomGeoJSONMap = {
 export type CustomGeoJSONSetting = Record<string, CustomGeoJSONMap>;
 
 interface InstanceSettings {
-  "admin-email": string;
+  "admin-email": string | null;
   "email-from-name": string | null;
   "email-from-address": string | null;
   "email-reply-to": string[] | null;
@@ -328,6 +328,7 @@ interface InstanceSettings {
   "enable-public-sharing": boolean;
   "enable-xrays": boolean;
   "example-dashboard-id": number | null;
+  "has-sample-database?"?: boolean; // Careful! This can be undefined during setup!
   "instance-creation": string;
   "read-only-mode": boolean;
   "search-typeahead-enabled": boolean;
